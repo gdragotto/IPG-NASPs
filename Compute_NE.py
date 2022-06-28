@@ -3,6 +3,7 @@ from Initial_str import *
 # control time
 from time import time
 from copy import deepcopy
+import csv
 
 import numpy as np
 
@@ -121,10 +122,10 @@ def IterativeSG(G, max_iter, opt_solver=1, S=[]):
                 p = list_best[aux_p]
                 s_p, u_max, _ = BestReactionGurobiNASP(G.name(), G.m(), G.c()[p], G.Q()[p], Profile, p, False,
                                                        Best_m[p])
-                if abs(Profits[p] - u_max)>= 1e-5:
-                    #print("Player",p)
-                    #print("\tBR",s_p)
-                    #print("\tIncumbent", Profile[p])
+                if abs(Profits[p] - u_max) >= 1e-5:
+                    # print("Player",p)
+                    # print("\tBR",s_p)
+                    # print("\tIncumbent", Profile[p])
                     aux = False
                     S_new[p].append(s_p)
                     Numb_stra_S = deepcopy(Numb_stra)
@@ -142,7 +143,7 @@ def IterativeSG(G, max_iter, opt_solver=1, S=[]):
                     S_new = [[] for _ in range(G.m())]
                     M_pos = [None, None, deepcopy(Numb_stra), deepcopy(S), deepcopy(U_p), deepcopy(U_depend),
                              deepcopy(S_new), None, 0]
-                    #print(list_best)
+                    # print(list_best)
                     list_best.append(p)
                     list_best = list_best[:aux_p] + list_best[aux_p + 1:]
                 aux_p = aux_p + 1
@@ -502,12 +503,23 @@ def RS(D, Numb_stra, U_depend, U_p, m):
 
 
 if __name__ == "__main__":
-    np.random.seed(6)
-    G = Game('NASP', NASPfile="./Instances/NASP/Instance_12q")
 
-    # DFS: EXECUTE m-SGM; max numb of iterations 50
-    ne, Profits_mSGM, S, numb_iter, numb_back, cpu_time = IterativeSG(G, 1000)
-    print("NE:", ne)
-    print("Profits", Profits_mSGM)
-    for p in range(G.m()):
-        print("Strategy of", p, "is:", S[p])
+    f = open('resultsNASP.csv', 'a')
+    writer = csv.writer(f)
+    writer.writerow(['Instance', 'iterations', 'cpu_time', 'status'])
+    f.flush()
+
+    for instance in range(149):
+        np.random.seed(6)
+        G = Game('NASP', NASPfile="./Instances/NASP/Instance_" + str(instance+1))
+
+        # DFS: EXECUTE m-SGM; max numb of iterations 50
+        ne, Profits_mSGM, S, numb_iter, numb_back, cpu_time = IterativeSG(G, 700)
+        print("NE:", ne)
+        print("Profits", Profits_mSGM)
+        for p in range(G.m()):
+            print("Strategy of", p, "is:", S[p])
+        status = "YES" if len(Profits_mSGM) > 1 else "NO"
+        writer.writerow([instance+1, numb_iter, cpu_time, status])
+        f.flush()
+
